@@ -179,7 +179,6 @@ if __name__ == '__main__':
         if lr > 1e-6:
             lr = 1e-6
 
-        print('s = {}, lr = {}'.format(s, lr))
         return lr
 
     # Initial conditions
@@ -227,12 +226,12 @@ if __name__ == '__main__':
 
         # Validation scores
         val_scores = evaluate_metrics(val_dataloader)
-        print("epoch {}: Validation scores", val_scores)
+        print(f"epoch {epoch+1}: Validation scores", val_scores)
         val_score = val_scores['f1']
 
         # Test scores
         test_scores = evaluate_metrics(test_dataloader)
-        print("epoch {}: Test scores", test_scores)
+        print(f"epoch {epoch+1}: Test scores", test_scores)
         test_score = test_scores['f1']
 
         # Prepare for next epoch
