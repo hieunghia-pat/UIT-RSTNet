@@ -34,7 +34,7 @@ def evaluate_loss(dataloader: data.DataLoader):
         with tqdm(desc='Epoch %d - Validation' % (epoch + 1), unit='it', total=len(dataloader)) as pbar:
             with torch.no_grad():
                 for it, sample in enumerate(dataloader):
-                    features = sample["grid_features"].to(device)
+                    features = sample["grid_features"][:, :49].to(device)
                     captions = sample["tokens"].to(device)
                     out = model(features, captions)
                     captions = captions[:, 1:].contiguous()
@@ -56,7 +56,7 @@ def evaluate_metrics(dataloader: data.DataLoader):
     gts = {}
     with tqdm(desc='Epoch %d - Evaluation' % (epoch + 1), unit='it', total=len(dataloader)) as pbar:
         for it, sample in enumerate(dataloader):
-            images = sample["grid_features"].to(device)
+            images = sample["grid_features"][:, :49].to(device)
             caps_gt = sample["captions"]
             with torch.no_grad():
                 out, _ = model.beam_search(images, vocab.max_caption_length, vocab.eos_idx, 5, out_size=1)
@@ -80,7 +80,7 @@ def train_xe():
     running_loss = .0
     with tqdm(desc='Epoch %d - Training with cross-entropy loss' % (epoch + 1), unit='it', total=len(train_dataloader)) as pbar:
         for it, sample in enumerate(train_dataloader):
-            features = sample["grid_features"].to(device)
+            features = sample["grid_features"][:, :49].to(device)
             captions = sample["tokens"].to(device)
             out = model(features, captions)
             optim.zero_grad()
@@ -95,7 +95,7 @@ def train_xe():
 
             pbar.set_postfix(loss=running_loss / (it + 1))
             pbar.update()
-            # scheduler.step()
+            scheduler.step()
 
     loss = running_loss / len(train_dataloader)
     return loss
@@ -107,8 +107,6 @@ def train_scst():
     running_reward_baseline = .0
 
     model.train()
-    scheduler_rl.step()
-    print('lr = ', optim_rl.state_dict()['param_groups'][0]['lr'])
 
     running_loss = .0
     seq_len = vocab.max_caption_length
@@ -116,7 +114,7 @@ def train_scst():
 
     with tqdm(desc='Epoch %d - train' % epoch, unit='it', total=len(train_dict_dataloader)) as pbar:
         for it, sample in enumerate(train_dict_dataloader):
-            detections = sample["grid_features"].to(device)
+            detections = sample["grid_features"][:, :49].to(device)
             outs, log_probs = model.beam_search(detections, seq_len, vocab.eos_idx,
                                                 beam_size, out_size=beam_size)
             optim.zero_grad()
@@ -133,6 +131,7 @@ def train_scst():
             loss = loss.mean()
             loss.backward()
             optim.step()
+            scheduler_rl.step()
 
             running_loss += loss.item()
             running_reward += reward.mean().item()
