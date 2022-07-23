@@ -255,11 +255,11 @@ if __name__ == '__main__':
 
     # Model and dataloaders
     encoder = TransformerEncoder(3, 0, attention_module=ScaledDotProductAttention, attention_module_kwargs={'m': args.m})
-    decoder = TransformerDecoderLayer(len(vocab), vocab.max_caption_length, 3, vocab.padding_idx)
+    decoder = TransformerDecoderLayer(len(vocab), 54, 3, vocab.padding_idx,
+                                        language_model_path="saved_language_models/phobert_language_best.pth")
     model = Transformer(vocab.bos_idx, encoder, decoder).to(device)
 
     def lambda_lr(s):
-        print("s:", s)
         if s <= 3:
             lr = args.xe_base_lr * s / 4
         elif s <= 10:
@@ -272,7 +272,6 @@ if __name__ == '__main__':
     
     def lambda_lr_rl(s):
         refine_epoch = args.refine_epoch_rl 
-        print("rl_s:", s)
         if s <= refine_epoch:
             lr = args.rl_base_lr
         elif s <= refine_epoch + 3:
