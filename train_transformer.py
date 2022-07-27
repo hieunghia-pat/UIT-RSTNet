@@ -254,7 +254,7 @@ if __name__ == '__main__':
 
     # Model and dataloaders
     encoder = TransformerEncoder(3, 0, attention_module=ScaledDotProductAttention, attention_module_kwargs={'m': args.m})
-    decoder = TransformerDecoderLayer(len(vocab), 54, 3, vocab.padding_idx,
+    decoder = TransformerDecoderLayer(vocab, 54, 3, vocab.padding_idx,
                                         language_model_path="saved_language_models/phobert_language_best.pth")
     model = Transformer(vocab.bos_idx, encoder, decoder).to(device)
 

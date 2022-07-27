@@ -77,18 +77,18 @@ class DecoderAdaptiveLayer(Module):
 
 
 class TransformerDecoderLayer(Module):
-    def __init__(self, vocab_size, max_len, N_dec, padding_idx, d_model=512, d_k=64, d_v=64, h=8, d_ff=2048, bert_hidden_size=768, dropout=.1,
+    def __init__(self, vocab, max_len, N_dec, padding_idx, d_model=512, d_k=64, d_v=64, h=8, d_ff=2048, bert_hidden_size=768, dropout=.1,
                  self_att_module=None, enc_att_module=None, self_att_module_kwargs=None, enc_att_module_kwargs=None, language_model_path=None):
         super(TransformerDecoderLayer, self).__init__()
         self.d_model = d_model
-        self.word_emb = nn.Embedding(vocab_size, d_model, padding_idx=padding_idx)
+        self.word_emb = nn.Embedding(len(vocab), d_model, padding_idx=padding_idx)
         self.pos_emb = nn.Embedding.from_pretrained(sinusoid_encoding_table(max_len + 1, d_model, 0), freeze=True)
         self.layers = ModuleList(
             [DecoderLayer(d_model, d_k, d_v, h, d_ff, dropout, self_att_module=self_att_module, enc_att_module=enc_att_module, self_att_module_kwargs=self_att_module_kwargs, enc_att_module_kwargs=enc_att_module_kwargs) if i < N_dec else DecoderAdaptiveLayer(d_model, d_k, d_v, h, d_ff, dropout, self_att_module=self_att_module, enc_att_module=enc_att_module, self_att_module_kwargs=self_att_module_kwargs, enc_att_module_kwargs=enc_att_module_kwargs) for i in range(N_dec + 1)])
-        self.fc = nn.Linear(d_model, vocab_size, bias=False)
+        self.fc = nn.Linear(d_model, len(vocab), bias=False)
 
         # loading the language model
-        self.language_model = LanguageModel(padding_idx=padding_idx, bert_hidden_size=bert_hidden_size, vocab_size=vocab_size, max_len=max_len)
+        self.language_model = LanguageModel(vocab=vocab, padding_idx=padding_idx, bert_hidden_size=bert_hidden_size, vocab_size=len(vocab), max_len=max_len)
         assert language_model_path is not None
         language_model_file = torch.load(language_model_path)
         self.language_model.load_state_dict(language_model_file['state_dict'], strict=False)
