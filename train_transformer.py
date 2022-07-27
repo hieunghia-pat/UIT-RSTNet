@@ -331,13 +331,13 @@ if __name__ == '__main__':
 
     print("Training starts")
     for epoch in range(start_epoch, start_epoch + 100):
-        # if not use_rl:
-        #     train_loss = train_xe()
-        # else:
-        #     train_loss, reward, reward_baseline = train_scst()
+        if not use_rl:
+            train_loss = train_xe()
+        else:
+            train_loss, reward, reward_baseline = train_scst()
 
         # Validation loss
-        # val_loss = evaluate_loss(val_dataloader)
+        val_loss = evaluate_loss(val_dataloader)
 
         # Validation scores
         scores = evaluate_metrics(val_dict_dataloader)
