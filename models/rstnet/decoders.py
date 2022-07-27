@@ -78,22 +78,15 @@ class DecoderAdaptiveLayer(Module):
 
 class TransformerDecoderLayer(Module):
     def __init__(self, vocab_size, max_len, N_dec, padding_idx, d_model=512, d_k=64, d_v=64, h=8, d_ff=2048, bert_hidden_size=768, dropout=.1,
-                 self_att_module=None, enc_att_module=None, self_att_module_kwargs=None, enc_att_module_kwargs=None, language_model_path=None):
+                 self_att_module=None, enc_att_module=None, self_att_module_kwargs=None, enc_att_module_kwargs=None):
         super(TransformerDecoderLayer, self).__init__()
         self.d_model = d_model
         self.word_emb = nn.Embedding(vocab_size, d_model, padding_idx=padding_idx)
         self.pos_emb = nn.Embedding.from_pretrained(sinusoid_encoding_table(max_len + 1, d_model, 0), freeze=True)
+        self.language_model = LanguageModel(padding_idx=padding_idx, bert_hidden_size=bert_hidden_size, vocab_size=vocab_size, max_len=max_len)
         self.layers = ModuleList(
             [DecoderLayer(d_model, d_k, d_v, h, d_ff, dropout, self_att_module=self_att_module, enc_att_module=enc_att_module, self_att_module_kwargs=self_att_module_kwargs, enc_att_module_kwargs=enc_att_module_kwargs) if i < N_dec else DecoderAdaptiveLayer(d_model, d_k, d_v, h, d_ff, dropout, self_att_module=self_att_module, enc_att_module=enc_att_module, self_att_module_kwargs=self_att_module_kwargs, enc_att_module_kwargs=enc_att_module_kwargs) for i in range(N_dec + 1)])
         self.fc = nn.Linear(d_model, vocab_size, bias=False)
-
-        # loading the language model
-        self.language_model = LanguageModel(padding_idx=padding_idx, bert_hidden_size=bert_hidden_size, vocab_size=vocab_size, max_len=max_len)
-        assert language_model_path is not None
-        language_model_file = torch.load(language_model_path)
-        self.language_model.load_state_dict(language_model_file['state_dict'], strict=False)
-        for p in self.language_model.parameters():
-            p.requires_grad = False
 
         self.max_len = max_len
         self.padding_idx = padding_idx
@@ -122,7 +115,7 @@ class TransformerDecoderLayer(Module):
             seq = self.running_seq
 
         out = self.word_emb(input) + self.pos_emb(seq)
-        _, language_feature = self.language_model(input)
+        _, language_feature = self.language_model(out, mask_self_attention, mask_queries)
 
         if encoder_output.shape[0] != pos.shape[0]:
             assert encoder_output.shape[0] % pos.shape[0] == 0
