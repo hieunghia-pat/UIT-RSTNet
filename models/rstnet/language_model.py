@@ -63,7 +63,7 @@ class LanguageModel(Module):
         pretrained_input_ids = []
         
         for input_id in input_ids:
-            pretrained_input_id = [self.pretrained_language_idx_mapping[str(ori_id.item())] for ori_id in input_id]
+            pretrained_input_id = [self.pretrained_language_idx_mapping[ori_id.item()] for ori_id in input_id]
             pretrained_input_ids.append(pretrained_input_id)
 
         # List -> tensor.
