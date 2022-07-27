@@ -165,7 +165,7 @@ if __name__ == '__main__':
         collate_fn=collate_fn
     )
 
-    model = LanguageModel(padding_idx=vocab.padding_idx, bert_hidden_size=768, vocab_size=len(vocab)).to(device)
+    model = LanguageModel(vocab=vocab, padding_idx=vocab.padding_idx, bert_hidden_size=768, vocab_size=len(vocab)).to(device)
 
     def lambda_lr(s):
         warm_up = args.warmup
